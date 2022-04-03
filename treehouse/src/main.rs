@@ -1,20 +1,42 @@
 use std::io::stdin;
 
+#[derive(Debug)]
+enum VisitorAction {
+    Accept,
+    AcceptWithNote { note: String },
+    Refuse,
+    Probation,
+}
+
+#[derive(Debug)]
 struct Visitor {
     name: String,
-    greeting: String,
+    action: VisitorAction,
+    age: i8
 }
 
 impl Visitor {
-    fn new(name: &str, greeting: &str) -> Self {
+    fn new(name: &str, action: VisitorAction, age: i8) -> Self {
         Self {
             name: name.to_lowercase(),
-            greeting: greeting.to_string(),
+            action,
+            age,
         }
     }
 
     fn greet_visitor(&self) {
-        println!("{}", self.greeting);
+        match &self.action {
+            VisitorAction::Accept => println!("Welcome to the treehouse, {}!", self.name),
+            VisitorAction::AcceptWithNote { note } => {
+                println!("Welcome to the treehouse, {}!", self.name);
+                println!("{}", note);
+                if self.age < 21 {
+                    println!("No alcohol for {}", self.name);
+                }
+            }
+            VisitorAction::Probation => println!("{} can improve their attitude before they come back in.", self.name),
+            VisitorAction::Refuse => println!("If you see {}, throw him down the ladder.", self.name),
+        }
     }
 }
 
@@ -27,18 +49,33 @@ fn what_is_your_name() -> String {
 }
 
 fn main() {
-    println!("Hello, what's your name?");
-    let name = what_is_your_name();
-    println!("Hello, {}!", name);
-    let visitor_list = [
-        Visitor::new("aditya", "Hey aditya, we brought some lean."),
-        Visitor::new("yuvraj", "Hi yuvraj, we did your geometry homework and failed it..."),
-        Visitor::new("gaurav", "Yo gaurav, how'd the football game go?"),
+    let mut visitor_list = vec![
+        Visitor::new("aditya", VisitorAction::Accept, 24),
+        Visitor::new("yuvraj", VisitorAction::AcceptWithNote{
+            note: String::from("We lost your geometry homework")
+        }, 9),
+        Visitor::new("gaurav", VisitorAction::Refuse, 124),
     ];
-    match visitor_list
-            .iter()
-            .find(|visitor| visitor.name == name) {
-        Some(visitor) => visitor.greet_visitor(),
-        None => println!("get out of my treehouse")
+    loop {
+        println!("Hello, what's your name?");
+        let name = what_is_your_name();
+        println!("Hello, {}!", name);
+
+        let known_visitor = visitor_list
+                .iter()
+                .find(|visitor| visitor.name == name);
+        match known_visitor {
+            Some(visitor) => visitor.greet_visitor(),
+            None => {
+                if name.is_empty() {
+                    break;
+                } else {
+                    println!("{} is not on the visitor list.", name);
+                    visitor_list.push(Visitor::new(&name, VisitorAction::Probation, 0));
+                }
+            }
+        }
     }
+    println!("The new total list of visitors: ");
+    println!("{:#?}", visitor_list);
 }
